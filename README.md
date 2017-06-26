@@ -29,3 +29,4 @@ Here is the current list by category :
 - Weavescope v1.5.0
 ### Storage
 - Nfs-provisioner v1.0.8
+##### Have a look at the README.md in related subdirectories for specific instructions.
