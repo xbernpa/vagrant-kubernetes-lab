@@ -50,6 +50,7 @@ Vagrant.configure(2) do |config|
       apt-get upgrade -y
       apt-get install -y docker.io
       apt-get install -y kubelet kubeadm kubectl kubernetes-cni
+      apt-get install -y nfs-common
       echo "export KUBERNETES_SERVICE_HOST=192.168.8.10" > /etc/profile.d/kubernetes.sh
       echo "export KUBERNETES_SERVICE_PORT=6443" >> /etc/profile.d/kubernetes.sh
       echo "export KUBECONFIG=/vagrant/kubeconfig/admin.conf" >> /etc/profile.d/kubernetes.sh
@@ -75,6 +76,7 @@ Vagrant.configure(2) do |config|
       apt-get upgrade -y
       apt-get install -y docker.io
       apt-get install -y kubelet kubeadm kubectl kubernetes-cni
+      apt-get install -y nfs-common
       echo "export KUBERNETES_SERVICE_HOST=192.168.8.10" > /etc/profile.d/kubernetes.sh
       echo "export KUBERNETES_SERVICE_PORT=6443" >> /etc/profile.d/kubernetes.sh
       kubeadm join --token=54c315.78a320e33baaf27d 192.168.8.10:6443
