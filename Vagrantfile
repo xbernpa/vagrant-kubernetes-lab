@@ -59,7 +59,10 @@ Vagrant.configure(2) do |config|
       export KUBECONFIG=/etc/kubernetes/admin.conf
       kubectl patch daemonset kube-proxy -n kube-system --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/command/2", "value":"--proxy-mode=userspace"}]'
       sleep 60
+      # Weave Net
       kubectl create -f /vagrant/networking/kube-weave.yml
+      # Flannel 
+      #kubectl create -f /vagrant/networking/kube-flannel.yml
     SHELL
   end
 
