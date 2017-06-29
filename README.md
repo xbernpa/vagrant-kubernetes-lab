@@ -27,6 +27,9 @@ Here is the current list by category :
 ### Monitoring
 - InfluxDB v1.1.1 + Grafana v4.0.2
 - Weavescope v1.5.0
+### Networking
+- Weave net v2.0.0
+- Flannel v0.7.1
 ### Storage
 - Nfs-provisioner v1.0.8
 ##### Have a look at the README.md in related subdirectories for specific instructions.
