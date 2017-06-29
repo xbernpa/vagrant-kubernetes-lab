@@ -6,6 +6,6 @@ This network add-on provides networking and network policy and is using these of
 The network add-on is automatically installed on vagrant up
 ### flannel
 This network add-on provides an overlay network provider and is using this image :
-- [flannel v0.7.1] (https://quay.io/repository/coreos/flannel?tab=tags)
+- [flannel v0.7.1](https://quay.io/repository/coreos/flannel?tab=tags)
 ##### Installation
 Before doing vagrant up, edit the Vagrantfile and comment weave entry and uncomment flannel.
