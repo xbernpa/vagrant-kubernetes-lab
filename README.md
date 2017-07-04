@@ -9,7 +9,7 @@ Vagrant was chosen for being able to create the cluster either on linux, windows
 
 ## Default provisioning
 Vagrant up will provide 2 Ubuntu Xenial VMs for a kubernetes cluster with these features by default :
-- Kubernetes control plane v1.6.6 
+- Kubernetes control plane v1.7.0
 - Weave network cni v2.0.0 
 - Kubernetes Dashboard v1.6.1
 - Heapster v1.3.0 
