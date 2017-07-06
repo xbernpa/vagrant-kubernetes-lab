@@ -87,6 +87,13 @@ Vagrant.configure(2) do |config|
       export KUBECONFIG=/vagrant/kubeconfig/admin.conf
       kubectl create -f /vagrant/monitoring/kube-heapster.yml
       kubectl create -f /vagrant/dashboard/kube-dashboard.yml
+      wget --no-verbose -O /tmp/helm-v2.5.0-linux-amd64.tar.gz https://storage.googleapis.com/kubernetes-helm/helm-v2.5.0-linux-amd64.tar.gz
+      tar -zxvf /tmp/helm-v2.5.0-linux-amd64.tar.gz
+      kubectl create serviceaccount -n kube-system tiller
+      kubectl create clusterrolebinding tiller-cluster-rule --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
+      /tmp/helm init --service-account=tiller --tiller-namespace=kube-system
+      rm -rf /tmp/helm-v2.5.0-linux-amd64.tar.gz
+      echo "export KUBECONFIG=/vagrant/kubeconfig/admin.conf" >> /etc/profile.d/kubernetes.sh
     SHELL
   end
 end
