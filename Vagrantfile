@@ -43,8 +43,10 @@ Vagrant.configure(2) do |config|
       set -e
       set -x
       sed 's/127\.0\.0\.1.*k8s.*/192\.168\.8\.10 k8smaster/' -i /etc/hosts
+      #echo "192.168.8.11	k8sworker" >> /etc/hosts
       curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-      echo "deb http://apt.kubernetes.io/ kubernetes-xenial main" >> ~/kubernetes.list
+      #echo "deb http://apt.kubernetes.io/ kubernetes-xenial unstable" >> ~/kubernetes.list
+      echo "deb https://packages.cloud.google.com/apt/ kubernetes-xenial-unstable main" >> ~/kubernetes.list
       mv ~/kubernetes.list /etc/apt/sources.list.d
       apt-get update
       apt-get upgrade -y
@@ -54,35 +56,37 @@ Vagrant.configure(2) do |config|
       echo "export KUBERNETES_SERVICE_HOST=192.168.8.10" > /etc/profile.d/kubernetes.sh
       echo "export KUBERNETES_SERVICE_PORT=6443" >> /etc/profile.d/kubernetes.sh
       echo "export KUBECONFIG=/vagrant/kubeconfig/admin.conf" >> /etc/profile.d/kubernetes.sh
-      kubeadm init --apiserver-advertise-address 192.168.8.10 --pod-network-cidr 10.244.0.0/16 --kubernetes-version v1.7.0 --token 54c315.78a320e33baaf27d 
+      kubeadm init --apiserver-advertise-address 192.168.8.10 --pod-network-cidr 10.244.0.0/16 --kubernetes-version v1.7.1 --token 54c315.78a320e33baaf27d 
       cp -rf  /etc/kubernetes/admin.conf /vagrant/kubeconfig/      
       export KUBECONFIG=/etc/kubernetes/admin.conf
       kubectl patch daemonset kube-proxy -n kube-system --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/command/2", "value":"--proxy-mode=userspace"}]'
       sleep 60
-      # Weave Net
+#      # Weave Net
       kubectl create -f /vagrant/networking/kube-weave.yml
       # Flannel 
       #kubectl create -f /vagrant/networking/kube-flannel.yml
     SHELL
   end
 
-  config.vm.define "k8sworker" do |k8sworker|
-    k8sworker.ssh.forward_agent = true
-    k8sworker.vm.provision "shell", inline: <<-SHELL
+ config.vm.define "k8sworker" do |k8sworker|
+   k8sworker.ssh.forward_agent = true
+   k8sworker.vm.provision "shell", inline: <<-SHELL
       set -e
       set -x
       sed 's/127\.0\.0\.1.*k8s.*/192\.168\.8\.11 k8sworker/' -i /etc/hosts
+      #echo "192.168.8.10	k8smaster" >> /etc/hosts
       curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-      echo "deb http://apt.kubernetes.io/ kubernetes-xenial main" >> ~/kubernetes.list
+#      echo "deb http://apt.kubernetes.io/ kubernetes-xenial main" >> ~/kubernetes.list
+      echo "deb https://packages.cloud.google.com/apt/ kubernetes-xenial-unstable main" >> ~/kubernetes.list
       mv ~/kubernetes.list /etc/apt/sources.list.d
       apt-get update
       apt-get upgrade -y
-      apt-get install -y docker.io
+       apt-get install -y docker.io
       apt-get install -y kubelet kubeadm kubectl kubernetes-cni
       apt-get install -y nfs-common
       echo "export KUBERNETES_SERVICE_HOST=192.168.8.10" > /etc/profile.d/kubernetes.sh
       echo "export KUBERNETES_SERVICE_PORT=6443" >> /etc/profile.d/kubernetes.sh
-      kubeadm join --token=54c315.78a320e33baaf27d 192.168.8.10:6443
+      kubeadm join --skip-preflight-checks --token=54c315.78a320e33baaf27d 192.168.8.10:6443 
       sleep 120
       export KUBECONFIG=/vagrant/kubeconfig/admin.conf
       kubectl create -f /vagrant/monitoring/kube-heapster.yml

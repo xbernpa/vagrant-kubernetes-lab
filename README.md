@@ -9,7 +9,7 @@ Vagrant was chosen for being able to create the cluster either on linux, windows
 
 ## Default provisioning
 Vagrant up will provide 2 Ubuntu Xenial VMs for a kubernetes cluster with these features by default :
-- Kubernetes control plane v1.7.0
+- Kubernetes control plane v1.7.1
 - Weave network cni v2.0.0 
 - Kubernetes Dashboard v1.6.1
 - Heapster v1.3.0 
@@ -32,4 +32,7 @@ Here is the current list by category :
 - Flannel v0.7.1
 ### Storage
 - Nfs-provisioner v1.0.8
+### Helm
+- Helm v2.5.0 (tilller)
+Installed by default, only helm client is required to fit your host OS : https://github.com/kubernetes/helm/releases
 ##### Have a look at the README.md in related subdirectories for specific instructions.
