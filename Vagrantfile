@@ -57,6 +57,8 @@ Vagrant.configure(2) do |config|
       echo "export KUBERNETES_SERVICE_PORT=6443" >> /etc/profile.d/kubernetes.sh
       echo "export KUBECONFIG=/vagrant/kubeconfig/admin.conf" >> /etc/profile.d/kubernetes.sh
       kubeadm init --apiserver-advertise-address 192.168.8.10 --pod-network-cidr 10.244.0.0/16 --kubernetes-version v1.7.1 --token 54c315.78a320e33baaf27d 
+      # Rename the cluster to something simpler
+      sed -i s,kubernetes-admin@kubernetes,local, /etc/kubernetes/admin.conf
       cp -rf  /etc/kubernetes/admin.conf /vagrant/kubeconfig/      
       export KUBECONFIG=/etc/kubernetes/admin.conf
       kubectl patch daemonset kube-proxy -n kube-system --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/command/2", "value":"--proxy-mode=userspace"}]'
