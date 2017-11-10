@@ -1,9 +1,27 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-
-
 Vagrant.require_version ">= 1.6.0"
+
+# Library to pass in parameters
+require 'getoptlong'
+
+opts = GetoptLong.new(
+  [
+    # The path on the host that will be mounted on k8sworker under /data
+    '--mount', GetoptLong::OPTIONAL_ARGUMENT
+  ]
+)
+
+# Mount /tmp if no specific directory is chosen by the user
+hostMount='/tmp'
+guestMount='/data'
+opts.each do |opt, arg|
+  case opt
+    when '--mount'
+      hostMount=arg
+  end
+end
 
 boxes = [
     {
@@ -72,6 +90,7 @@ Vagrant.configure(2) do |config|
 
  config.vm.define "k8sworker" do |k8sworker|
    k8sworker.ssh.forward_agent = true
+   k8sworker.vm.synced_folder "#{hostMount}", "#{guestMount}"
    k8sworker.vm.provision "shell", inline: <<-SHELL
       set -e
       set -x
