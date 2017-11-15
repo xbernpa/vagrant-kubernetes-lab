@@ -6,20 +6,25 @@ Vagrant.require_version ">= 1.6.0"
 # Library to pass in parameters
 require 'getoptlong'
 
+DOCKERHUB_OPT='--dockerhub'
+MOUNT_OPT='--mount'
+
 opts = GetoptLong.new(
-  [
     # The path on the host that will be mounted on k8sworker under /data
-    '--mount', GetoptLong::OPTIONAL_ARGUMENT
-  ]
+    [ MOUNT_OPT, GetoptLong::OPTIONAL_ARGUMENT ],
+    [ DOCKERHUB_OPT, GetoptLong::OPTIONAL_ARGUMENT ]
 )
 
 # Mount /tmp if no specific directory is chosen by the user
 hostMount='/tmp'
 guestMount='/data'
+dockerLogin=false
 opts.each do |opt, arg|
   case opt
-    when '--mount'
+    when MOUNT_OPT
       hostMount=arg
+    when DOCKERHUB_OPT
+      dockerLogin=true
   end
 end
 
@@ -104,6 +109,8 @@ Vagrant.configure(2) do |config|
       apt-get upgrade -y
        apt-get install -y docker.io
       apt-get install -y kubelet kubeadm kubectl kubernetes-cni
+      # Tell kubelet to use /root for its HOME.  This will help setup docker login.
+      sed -i '/\[Service\]/a Environment="HOME=/root"' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
       apt-get install -y nfs-common
       echo "export KUBERNETES_SERVICE_HOST=192.168.8.10" > /etc/profile.d/kubernetes.sh
       echo "export KUBERNETES_SERVICE_PORT=6443" >> /etc/profile.d/kubernetes.sh
@@ -120,5 +127,33 @@ Vagrant.configure(2) do |config|
       rm -rf /tmp/helm-v2.7.0-linux-amd64.tar.gz
       echo "export KUBECONFIG=/vagrant/kubeconfig/admin.conf" >> /etc/profile.d/kubernetes.sh
     SHELL
+
+   if dockerLogin then
+       k8sworker.vm.provision "shell", env: {"USERNAME" => Username.new, "PASSWORD" => Password.new}, inline: <<-SHELL
+         set +x
+         docker login -u $USERNAME -p $PASSWORD
+       SHELL
+   end
+ end
+end
+
+class Username
+  def to_s
+    print "Please enter your dockerhub username and password.\n"
+    print "Username: "
+    STDIN.gets.chomp
+  end
+end
+
+class Password
+  def to_s
+    begin
+    system 'stty -echo'
+    print "Password: "
+    pass = URI.escape(STDIN.gets.chomp)
+    ensure
+    system 'stty echo'
+    end
+    pass
   end
 end
