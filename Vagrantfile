@@ -38,7 +38,6 @@ Vagrant.configure(2) do |config|
   end
 
   config.vm.define "k8smaster" do |k8smaster|
-    zorg = "glub"
     k8smaster.ssh.forward_agent = true
     k8smaster.vm.provision "shell", inline: <<-SHELL
       set -e
