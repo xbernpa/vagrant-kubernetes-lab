@@ -1,6 +1,6 @@
 ### ngix-ingress-controller
 This ingress controller is using the following images:
-- [nginx-ingress-controller v0.9.0-beta.8](https://console.cloud.google.com/gcr/images/google-containers/GLOBAL/nginx-ingress-controller)
+- [nginx-ingress-controller v0.9.0-beta.15](https://console.cloud.google.com/gcr/images/google-containers/GLOBAL/nginx-ingress-controller)
 - [defaultbackend v1.4](https://console.cloud.google.com/gcr/images/google-containers/GLOBAL/defaultbackend)
 ##### Installation
 Install with kubectl :
