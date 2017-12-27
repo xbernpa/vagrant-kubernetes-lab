@@ -1,9 +1,32 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-
-
 Vagrant.require_version ">= 1.6.0"
+
+# Library to pass in parameters
+require 'getoptlong'
+
+DOCKERHUB_OPT='--dockerhub'
+MOUNT_OPT='--mount'
+
+opts = GetoptLong.new(
+    # The path on the host that will be mounted on k8sworker under /data
+    [ MOUNT_OPT, GetoptLong::OPTIONAL_ARGUMENT ],
+    [ DOCKERHUB_OPT, GetoptLong::OPTIONAL_ARGUMENT ]
+)
+
+# Mount /tmp if no specific directory is chosen by the user
+hostMount='/tmp'
+guestMount='/data'
+dockerLogin=false
+opts.each do |opt, arg|
+  case opt
+    when MOUNT_OPT
+      hostMount=arg
+    when DOCKERHUB_OPT
+      dockerLogin=true
+  end
+end
 
 boxes = [
     {
@@ -57,6 +80,8 @@ Vagrant.configure(2) do |config|
       echo "export KUBERNETES_SERVICE_PORT=6443" >> /etc/profile.d/kubernetes.sh
       echo "export KUBECONFIG=/vagrant/kubeconfig/admin.conf" >> /etc/profile.d/kubernetes.sh
       kubeadm init --apiserver-advertise-address 192.168.8.10 --pod-network-cidr 10.244.0.0/16 --kubernetes-version v1.7.1 --token 54c315.78a320e33baaf27d 
+      # Rename the cluster to something simpler
+      sed -i s,kubernetes-admin@kubernetes,local, /etc/kubernetes/admin.conf
       cp -rf  /etc/kubernetes/admin.conf /vagrant/kubeconfig/      
       export KUBECONFIG=/etc/kubernetes/admin.conf
       kubectl patch daemonset kube-proxy -n kube-system --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/command/2", "value":"--proxy-mode=userspace"}]'
@@ -70,6 +95,7 @@ Vagrant.configure(2) do |config|
 
  config.vm.define "k8sworker" do |k8sworker|
    k8sworker.ssh.forward_agent = true
+   k8sworker.vm.synced_folder "#{hostMount}", "#{guestMount}"
    k8sworker.vm.provision "shell", inline: <<-SHELL
       set -e
       set -x
@@ -83,6 +109,8 @@ Vagrant.configure(2) do |config|
       apt-get upgrade -y
        apt-get install -y docker.io
       apt-get install -y kubelet kubeadm kubectl kubernetes-cni
+      # Tell kubelet to use /root for its HOME.  This will help setup docker login.
+      sed -i '/\[Service\]/a Environment="HOME=/root"' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
       apt-get install -y nfs-common
       echo "export KUBERNETES_SERVICE_HOST=192.168.8.10" > /etc/profile.d/kubernetes.sh
       echo "export KUBERNETES_SERVICE_PORT=6443" >> /etc/profile.d/kubernetes.sh
@@ -91,13 +119,41 @@ Vagrant.configure(2) do |config|
       export KUBECONFIG=/vagrant/kubeconfig/admin.conf
       kubectl create -f /vagrant/monitoring/kube-heapster.yml
       kubectl create -f /vagrant/dashboard/kube-dashboard.yml
-      wget --no-verbose -O /tmp/helm-v2.5.0-linux-amd64.tar.gz https://storage.googleapis.com/kubernetes-helm/helm-v2.5.0-linux-amd64.tar.gz
-      tar -zxvf /tmp/helm-v2.5.0-linux-amd64.tar.gz --strip-components=1 -C /tmp
+      wget --no-verbose -O /tmp/helm-v2.7.0-linux-amd64.tar.gz https://storage.googleapis.com/kubernetes-helm/helm-v2.7.0-linux-amd64.tar.gz
+      tar -zxvf /tmp/helm-v2.7.0-linux-amd64.tar.gz --strip-components=1 -C /tmp
       kubectl create serviceaccount -n kube-system tiller
       kubectl create clusterrolebinding tiller-cluster-rule --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
       /tmp/helm init --service-account=tiller --tiller-namespace=kube-system
-      rm -rf /tmp/helm-v2.5.0-linux-amd64.tar.gz
+      rm -rf /tmp/helm-v2.7.0-linux-amd64.tar.gz
       echo "export KUBECONFIG=/vagrant/kubeconfig/admin.conf" >> /etc/profile.d/kubernetes.sh
     SHELL
+
+   if dockerLogin then
+       k8sworker.vm.provision "shell", env: {"USERNAME" => Username.new, "PASSWORD" => Password.new}, inline: <<-SHELL
+         set +x
+         docker login -u $USERNAME -p $PASSWORD
+       SHELL
+   end
+ end
+end
+
+class Username
+  def to_s
+    print "Please enter your dockerhub username and password.\n"
+    print "Username: "
+    STDIN.gets.chomp
+  end
+end
+
+class Password
+  def to_s
+    begin
+    system 'stty -echo'
+    print "Password: "
+    pass = URI.escape(STDIN.gets.chomp)
+    ensure
+    system 'stty echo'
+    end
+    pass
   end
 end
