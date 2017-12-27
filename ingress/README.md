@@ -66,6 +66,6 @@ Create the resources in the cluster :
 ```
 kubectl create -f app1.yml
 ```
-Finally to validatepoint your local browser to http://test.com/app1
+Finally to validate point your local browser to http://test.com/app1
 ##### TODO
 - Add configmap for custom configs
