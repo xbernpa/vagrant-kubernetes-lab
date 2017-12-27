@@ -121,7 +121,7 @@ spec:
         # Any image is permissable as long as:
         # 1. It serves a 404 page at /
         # 2. It serves 200 on a /healthz endpoint
-        image: gcr.io/google_containers/defaultbackend:1.3
+        image: gcr.io/google_containers/defaultbackend:1.4
         livenessProbe:
           httpGet:
             path: /healthz
@@ -175,7 +175,7 @@ spec:
       terminationGracePeriodSeconds: 60
       serviceAccountName: nginx-ingress-serviceaccount
       containers:
-      - image: gcr.io/google_containers/nginx-ingress-controller:0.9.0-beta.8
+      - image: gcr.io/google_containers/nginx-ingress-controller:0.9.0-beta.15
         name: nginx-ingress-controller
         readinessProbe:
           httpGet:
