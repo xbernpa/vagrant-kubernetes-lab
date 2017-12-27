@@ -31,7 +31,7 @@ The `--mount=<pathOnHost>` option allows to choose the directory on the host tha
 Multiple optionnal extra softwares have been tested with this cluster and are available if needed.
 Here is the current list by category :
 ### Ingress
-- Nginx ingress controller v0.9.0-beta.8 + Default backend v1.3
+- Nginx ingress controller v0.9.0-beta.15 + Default backend v1.4
 ### Monitoring
 - InfluxDB v1.1.1 + Grafana v4.0.2
 - Weavescope v1.5.0
