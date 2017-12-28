@@ -30,7 +30,7 @@ apt-get install -y kubelet kubeadm kubectl kubernetes-cni
 apt-get install -y nfs-common
 
 # install helm client
-curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash
+curl --silent https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash
 
 # Add the kubernetes config to our profile in order to use the kubectl command without specifying it.
 echo "export KUBECONFIG=/vagrant/kubeconfig/admin.conf" >> /etc/profile.d/kubernetes.sh

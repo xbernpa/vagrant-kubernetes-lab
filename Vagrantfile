@@ -4,26 +4,42 @@
 Vagrant.require_version ">= 1.6.0"
 
 # Library to pass in parameters
-#require 'getoptlong'
+require 'getoptlong'
 
-DOCKERHUB_OPT='--dockerhub'
 MOUNT_OPT='--mount'
+DOCKER_USERNAME_OPT='--docker-username'
+DOCKER_PASSWORD_OPT='--docker-password'
 
-#cmd_opts = GetoptLong.new(
-#    # The path on the host that will be mounted on k8sworker under /data
-#    [ MOUNT_OPT, GetoptLong::OPTIONAL_ARGUMENT ],
-#    [ DOCKERHUB_OPT, GetoptLong::OPTIONAL_ARGUMENT ]
-#)
+cmd_opts = GetoptLong.new(
+    # The path on the host that will be mounted on the nodes under /data
+    [ MOUNT_OPT, GetoptLong::OPTIONAL_ARGUMENT ],
+    # The dockerhub credentials
+    [ DOCKER_USERNAME_OPT, GetoptLong::OPTIONAL_ARGUMENT ],
+    [ DOCKER_PASSWORD_OPT, GetoptLong::OPTIONAL_ARGUMENT ]
+)
 
 options = {
   :kubernetes => "v1.9.0",
   :pod_network_cidr => "10.244.0.0/16",
   :kubeadm_token => "54c315.78a320e33baaf27d",
-  #:host_mount => cmd_opts[MOUNT_OPT] | "/tmp",  
-  #:guest_mount => "/data",  
-  #:docker_login => cmd_opts[DOCKERHUB_OPT] | false,  
+  :host_mount => nil,  
+  :guest_mount => "/data",  
+  :docker_username => nil,  
+  :docker_password => nil,  
   :network => "weave" # or "flannel"
 }
+
+cmd_opts.each do |opt, arg|
+  case opt
+    when MOUNT_OPT
+      options[:host_mount]=arg
+      puts "Mount local folder #{arg} --> /data"
+    when DOCKER_USERNAME_OPT
+      options[:docker_username]=arg
+    when DOCKER_PASSWORD_OPT
+      options[:docker_password]=arg
+  end
+end
 
 boxes = [
     {
@@ -68,8 +84,14 @@ Vagrant.configure("2") do |config|
   boxes.each do |box|
     config.vm.define box[:name], primary: box[:is_master] == true do |node|
       node.ssh.forward_agent = true
+      # Mount an additional shared folder if specified as a command-line argument
+      if options[:host_mount]
+        node.vm.synced_folder "#{options[:host_mount]}", "#{options[:guest_mount]}"
+      end
+      # setup the node with kubernetes requirements
       node.vm.provision "shell", path: "./scripts/setup-node.sh", args: [box[:name], box[:eth1]]
 
+      # setup the node depending on its role: master or worker
       if box[:is_master]
         node.vm.provision "shell", inline: <<-SHELL
           set -e -x
@@ -78,7 +100,7 @@ Vagrant.configure("2") do |config|
           # Copy Kube config into our shared Vagrant folder
           cp -rf  /etc/kubernetes/admin.conf /vagrant/kubeconfig/      
         SHELL
-      else
+      else # it is a worker
         master = boxes.select { |box| box[:is_master] }.first
         raise "Could not find master box" if master == nil
 
@@ -89,6 +111,15 @@ Vagrant.configure("2") do |config|
         SHELL
       end
 
+      # if the user provided its credentials for his DockerHub account, then do the login for each node.
+      if options[:docker_username] && options[:docker_password] then
+        node.vm.provision "shell", env: {"USERNAME" => options[:docker_username], "PASSWORD" => options[:docker_password]}, inline: <<-SHELL
+          set -e
+          echo "Log into Dockerhub with user $USERNAME"
+          docker login -u $USERNAME -p $PASSWORD
+        SHELL
+      end
+       
       # Run post install script only in the last box
       isLastBox = boxes.last[:name] == box[:name]
       if isLastBox
@@ -97,4 +128,3 @@ Vagrant.configure("2") do |config|
     end
   end  
 end
-
