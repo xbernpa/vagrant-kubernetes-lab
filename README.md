@@ -17,6 +17,12 @@ Vagrant up will provide 2 Ubuntu Xenial VMs for a kubernetes cluster with these 
 
 ## Options
 
+### network
+By default, we will use the Weave-Net driver but you can override it with flannel like this:
+```
+ vagrant --network=flannel up
+```
+
 ### mount
 It is possible to mount a directory from the host to the /data directory on each node.  This option could be used, for example, to make git repositories local to the host available to be used in the cluster.
 

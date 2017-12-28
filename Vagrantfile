@@ -7,12 +7,15 @@ Vagrant.require_version ">= 1.6.0"
 require 'getoptlong'
 
 MOUNT_OPT='--mount'
+NETWORK_OPT='--network'
 DOCKER_USERNAME_OPT='--docker-username'
 DOCKER_PASSWORD_OPT='--docker-password'
 
 cmd_opts = GetoptLong.new(
     # The path on the host that will be mounted on the nodes under /data
     [ MOUNT_OPT, GetoptLong::OPTIONAL_ARGUMENT ],
+    # The network driver to user (weave or flannel)
+    [ NETWORK_OPT, GetoptLong::OPTIONAL_ARGUMENT ],
     # The dockerhub credentials
     [ DOCKER_USERNAME_OPT, GetoptLong::OPTIONAL_ARGUMENT ],
     [ DOCKER_PASSWORD_OPT, GetoptLong::OPTIONAL_ARGUMENT ]
@@ -34,7 +37,10 @@ cmd_opts.each do |opt, arg|
     when MOUNT_OPT
       options[:host_mount]=arg
       puts "Mount local folder #{arg} --> /data"
-    when DOCKER_USERNAME_OPT
+      when NETWORK_OPT
+        options[:network]=arg
+        puts "Use Network driver #{arg}"
+      when DOCKER_USERNAME_OPT
       options[:docker_username]=arg
     when DOCKER_PASSWORD_OPT
       options[:docker_password]=arg
