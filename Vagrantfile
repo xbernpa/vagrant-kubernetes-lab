@@ -32,6 +32,7 @@ options = {
   :network => "weave" # or "flannel"
 }
 
+
 cmd_opts.each do |opt, arg|
   case opt
     when MOUNT_OPT
@@ -47,21 +48,59 @@ cmd_opts.each do |opt, arg|
   end
 end
 
+
+# The number of nodes to provision
+$num_node = (ENV['NUM_NODES'] || 1).to_i
+
+# ip configuration
+$master_hostip = 10
+$master_network = "192.168.8."
+$node_ips = $num_node.times.collect { |n| $master_network + "#{$master_hostip+n+1}" }
+$master_mem = 1024
+$node_mem = 512
+
+# boxes = [
+#     {
+#         :name => "kmaster",
+#         :eth1 => "192.168.8.10",
+#         :mem => "1024",
+#         :cpu => "1",
+#         :is_master => true
+#     },
+#     {
+#         :name => "kn1",
+#         :eth1 => "192.168.8.11",
+#         :mem => "1024",
+#         :cpu => "1"
+#     },
+#     {
+#         :name => "kn2",
+#         :eth1 => "192.168.8.12",
+#         :mem => "1024",
+#         :cpu => "1"
+#     }
+# ]
+
+
 boxes = [
     {
-        :name => "k8smaster",
-        :eth1 => "192.168.8.10",
-        :mem => "1024",
+        :name => "kmaster",
+        :eth1 => $master_network+$master_hostip.to_s,
+        :mem => $master_mem.to_s,
         :cpu => "1",
         :is_master => true
-    },
-    {
-        :name => "k8sworker",
-        :eth1 => "192.168.8.11",
-        :mem => "2048",
-        :cpu => "2"
     }
 ]
+
+
+print "Creating a #{$num_node}-node cluster.\n"
+$num_node.times do |n|
+  boxes.push({
+      :name => "knode#{n+1}",
+      :eth1 => $node_ips[n],
+      :mem => $node_mem.to_s,
+      :cpu => "1"})
+end
 
 Vagrant.configure("2") do |config|
 
