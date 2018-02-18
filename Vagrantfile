@@ -22,7 +22,8 @@ cmd_opts = GetoptLong.new(
 )
 
 options = {
-  :kubernetes => "v1.9.0",
+  #:kubernetes => "1.9.1",
+  :kubernetes => "latest",
   :pod_network_cidr => "10.244.0.0/16",
   :kubeadm_token => "54c315.78a320e33baaf27d",
   :host_mount => nil,  
@@ -51,14 +52,14 @@ boxes = [
     {
         :name => "k8smaster",
         :eth1 => "192.168.8.10",
-        :mem => "1024",
+        :mem => "2048",
         :cpu => "1",
         :is_master => true
     },
     {
         :name => "k8sworker",
         :eth1 => "192.168.8.11",
-        :mem => "2048",
+        :mem => "4096",
         :cpu => "2"
     }
 ]
@@ -95,14 +96,20 @@ Vagrant.configure("2") do |config|
         node.vm.synced_folder "#{options[:host_mount]}", "#{options[:guest_mount]}"
       end
       # setup the node with kubernetes requirements
-      node.vm.provision "shell", path: "./scripts/setup-node.sh", args: [box[:name], box[:eth1]]
+      node.vm.provision "shell", path: "./scripts/setup-node.sh", args: [options[:kubernetes], box[:name], box[:eth1]]
 
       # setup the node depending on its role: master or worker
       if box[:is_master]
-        node.vm.provision "shell", inline: <<-SHELL
+        node.vm.provision "shell", args: [options[:kubernetes]], inline: <<-SHELL
           set -e -x
+          KUBE_VERSION=$1
+          KUBEADM_VERSION=
           # Create the master node
-          kubeadm init --apiserver-advertise-address #{box[:eth1]} --pod-network-cidr #{options[:pod_network_cidr]} --kubernetes-version #{options[:kubernetes]} --token #{options[:kubeadm_token]}
+          #kubeadm init --apiserver-advertise-address #{box[:eth1]} --pod-network-cidr #{options[:pod_network_cidr]} --kubernetes-version #{options[:kubernetes]} --token #{options[:kubeadm_token]}
+          if [ "$KUBE_VERSION" != "latest" ]; then
+            KUBEADM_VERSION="--kubernetes-version v$KUBE_VERSION"
+          fi
+          kubeadm init --apiserver-advertise-address #{box[:eth1]} --pod-network-cidr #{options[:pod_network_cidr]} --token #{options[:kubeadm_token]} $KUBEADM_VERSION
           # Copy Kube config into our shared Vagrant folder
           cp -rf  /etc/kubernetes/admin.conf /vagrant/kubeconfig/      
         SHELL
@@ -129,7 +136,7 @@ Vagrant.configure("2") do |config|
       # Run post install script only in the last box
       isLastBox = boxes.last[:name] == box[:name]
       if isLastBox
-        node.vm.provision "shell", path: "./scripts/post-install.sh", args: [options[:network]]
+        node.vm.provision "shell", path: "./scripts/post-install.sh",  args: [options[:network]]
       end
     end
   end  
