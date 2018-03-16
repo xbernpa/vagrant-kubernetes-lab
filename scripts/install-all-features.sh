@@ -16,11 +16,11 @@ kubectl patch storageclass example-nfs -p '{"metadata": {"annotations":{"storage
 set +x
 echo "----------------------------<<< ADD INGRESS >>>-------------------------------"
 set -x
-kubectl create -f ingress/kube-nginx-ingress-controller.yml
+kubectl apply -f ingress/kube-nginx-ingress-controller.yml
 
 # Monitoring
 set +x
 echo "----------------------------<<< ADD MONITORING >>>-------------------------------"
 set -x
-kubectl create -f monitoring/kube-influxdb-grafana.yml
-kubectl apply --namespace kube-system -f "https://cloud.weave.works/k8s/scope.yaml?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+kubectl apply -f monitoring/kube-influxdb-grafana.yml
+kubectl apply  -f "https://cloud.weave.works/k8s/scope.yaml?k8s-version=$(kubectl version | base64 | tr -d '\n')"

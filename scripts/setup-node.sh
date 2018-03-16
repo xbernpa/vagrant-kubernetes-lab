@@ -4,14 +4,21 @@ echo "----------------------------<<< SETUP-NODE >>>----------------------------
 echo "-----------------------------------------------------------------------------"
 set -e -x
 
-BOX_NAME=$1
-BOX_ETH1=$2
+KUBE_VERSION=$1
+BOX_NAME=$2
+BOX_ETH1=$3
+KUBE_APT_VERSION=
 
+if [ -n "$KUBE_VERSION" ]; then
+    if [ "$KUBE_VERSION" != "latest" ]; then
+        KUBE_APT_VERSION="=$KUBE_VERSION-00 --allow-downgrades"
+    fi
+fi
 if [ -z "$BOX_NAME" ]; then
-    echo "Expected to receive the box name as first parameter"
+    echo "Expected to receive the box name as second parameter"
 fi
 if [ -z "$BOX_ETH1" ]; then
-    echo "Expected to receive the box eth1 as second parameter"
+    echo "Expected to receive the box eth1 as third parameter"
 fi
 
 # Inject our IP into the /etc/hosts in order to fix issues with VirtualBox networking
@@ -26,7 +33,10 @@ EOF
 apt-get update
 apt-get upgrade -y
 apt-get install -y docker.io
-apt-get install -y kubelet kubeadm kubectl kubernetes-cni
+apt-get install -y kubelet$KUBE_APT_VERSION
+apt-get install -y kubeadm$KUBE_APT_VERSION
+apt-get install -y kubectl$KUBE_APT_VERSION 
+apt-get install -y kubernetes-cni
 apt-get install -y nfs-common
 
 # install helm client
